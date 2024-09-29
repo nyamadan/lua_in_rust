@@ -104,6 +104,30 @@ fn lex_number(raw: &[char], initial_loc: Location) -> Option<(Token, Location)> 
     }
 }
 
+fn lex_identifier(raw: &[char], initial_loc: Location) -> Option<(Token, Location)> {
+    let mut ident = String::new();
+    let mut next_loc = initial_loc;
+    let mut c = raw[initial_loc.index];
+    while c.is_alphanumeric() || c == '_' {
+        ident.push_str(&c.to_string());
+        next_loc = next_loc.increment(false);
+        c = raw[next_loc.index];
+    }
+
+    if ident.len() > 0 && !ident.chars().next().unwrap().is_digit(10) {
+        Some((
+            Token {
+                value: ident,
+                loc: initial_loc,
+                kind: TokenKind::Indentifier,
+            },
+            next_loc,
+        ))
+    } else {
+        None
+    }
+}
+
 pub fn lex(s: &[char]) -> Result<Vec<Token>, String> {
     let mut loc = Location {
         col: 0,
@@ -139,7 +163,7 @@ pub fn lex(s: &[char]) -> Result<Vec<Token>, String> {
         return Err(loc.debug(s, "Unrecognized character while lexing:"));
     }
 
-    unimplemented!()
+    Ok(tokens)
 }
 
 #[cfg(test)]

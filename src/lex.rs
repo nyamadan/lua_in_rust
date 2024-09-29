@@ -1,6 +1,4 @@
-use std::fmt::format;
-
-#[derive(Clone, Copy, Debug)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Location {
     col: i32,
     line: i32,
@@ -49,7 +47,7 @@ impl Location {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum TokenKind {
     Indentifier,
     Syntax,
@@ -58,7 +56,7 @@ pub enum TokenKind {
     Operator,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Token {
     pub value: String,
     pub kind: TokenKind,
@@ -284,5 +282,79 @@ mod tests {
         assert_eq!(new_loc.col, 0);
         assert_eq!(new_loc.line, 4);
         assert_eq!(new_loc.index, 11);
+    }
+
+    #[test]
+    fn test_lex_function() {
+        let input = "local x = 1 + 2;";
+        let raw: Vec<_> = input.chars().collect();
+        let tokens = lex(&raw).expect("Failed to parse");
+        let expected = vec![
+            Token {
+                value: String::from("local"),
+                kind: TokenKind::Keyword,
+                loc: Location {
+                    col: 0,
+                    line: 0,
+                    index: 0,
+                },
+            },
+            Token {
+                value: String::from("x"),
+                kind: TokenKind::Indentifier,
+                loc: Location {
+                    col: 6,
+                    line: 0,
+                    index: 6,
+                },
+            },
+            Token {
+                value: String::from("="),
+                kind: TokenKind::Syntax,
+                loc: Location {
+                    col: 8,
+                    line: 0,
+                    index: 8,
+                },
+            },
+            Token {
+                value: String::from("1"),
+                kind: TokenKind::Number,
+                loc: Location {
+                    col: 10,
+                    line: 0,
+                    index: 10,
+                },
+            },
+            Token {
+                value: String::from("+"),
+                kind: TokenKind::Operator,
+                loc: Location {
+                    col: 12,
+                    line: 0,
+                    index: 12,
+                },
+            },
+            Token {
+                value: String::from("2"),
+                kind: TokenKind::Number,
+                loc: Location {
+                    col: 14,
+                    line: 0,
+                    index: 14,
+                },
+            },
+            Token {
+                value: String::from(";"),
+                kind: TokenKind::Syntax,
+                loc: Location {
+                    col: 15,
+                    line: 0,
+                    index: 15,
+                },
+            },
+        ];
+
+        assert_eq!(tokens, expected);
     }
 }

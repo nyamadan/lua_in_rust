@@ -177,6 +177,29 @@ fn lex_keyword(raw: &[char], initial_loc: Location) -> Option<(Token, Location)>
     ))
 }
 
+fn lex_syntax(raw: &[char], initial_loc: Location) -> Option<(Token, Location)> {
+    let syntax = [";", "=", "(", ")", ","];
+
+    for possible_syntax in syntax {
+        let c = raw[initial_loc.index];
+        let next_loc = initial_loc.increment(false);
+
+        // TODO: this won't with multiple-character operations like >= or ==
+        if possible_syntax == c.to_string() {
+            return Some((
+                Token {
+                    value: possible_syntax.to_string(),
+                    loc: initial_loc,
+                    kind: TokenKind::Syntax,
+                },
+                next_loc,
+            ));
+        }
+    }
+
+    None
+}
+
 fn lex_operator(raw: &[char], initial_loc: Location) -> Option<(Token, Location)> {
     let operators = ["+", "-", "<"];
 

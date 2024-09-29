@@ -128,6 +128,55 @@ fn lex_identifier(raw: &[char], initial_loc: Location) -> Option<(Token, Locatio
     }
 }
 
+fn lex_keyword(raw: &[char], initial_loc: Location) -> Option<(Token, Location)> {
+    let syntax = ["function", "end", "if", "then", "local", "return"];
+
+    let mut next_loc = initial_loc;
+    let mut value = String::new();
+
+    'outer: for possible_syntax in syntax {
+        let mut c = raw[initial_loc.index];
+        next_loc = initial_loc;
+        while c.is_alphanumeric() || c == '_' {
+            value.push_str(&c.to_string());
+            next_loc = next_loc.increment(false);
+            c = raw[next_loc.index];
+
+            let n = next_loc.index - initial_loc.index;
+            if value != possible_syntax[..n] {
+                value = String::new();
+                continue 'outer;
+            }
+        }
+
+        if value.len() < possible_syntax.len() {
+            value = String::new();
+        }
+
+        break;
+    }
+
+    if value.is_empty() {
+        return None;
+    }
+
+    if next_loc.index < raw.len() - 1 {
+        let next_c = raw[next_loc.index];
+        if next_c.is_alphanumeric() || next_c == '_' {
+            return None;
+        }
+    }
+
+    Some((
+        Token {
+            value: value,
+            loc: initial_loc,
+            kind: TokenKind::Keyword
+        },
+        next_loc
+    ))
+}
+
 pub fn lex(s: &[char]) -> Result<Vec<Token>, String> {
     let mut loc = Location {
         col: 0,
@@ -139,7 +188,7 @@ pub fn lex(s: &[char]) -> Result<Vec<Token>, String> {
 
     let lexers = [
         lex_keyword,
-        lex_indentifier,
+        lex_identifier,
         lex_number,
         lex_syntax,
         lex_operator,

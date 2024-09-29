@@ -1,9 +1,9 @@
-use crate::parse::AST;
+use crate::parse::Ast;
 
 pub struct Program {
 }
 
-pub fn compile(_raw: &[char], _ast: AST) -> Program {
+pub fn compile(_raw: &[char], _ast: Ast) -> Program {
     unimplemented!()
 }
 

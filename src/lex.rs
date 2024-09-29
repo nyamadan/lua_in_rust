@@ -56,7 +56,7 @@ pub enum TokenKind {
     Operator,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Token {
     pub value: String,
     pub kind: TokenKind,
@@ -262,6 +262,21 @@ pub fn lex(s: &[char]) -> Result<Vec<Token>, String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_eat_whitespace() {
+        let input: Vec<char> = "   \n\t  x".chars().collect();
+        let initial_loc = Location {
+            col: 0,
+            line: 0,
+            index: 0,
+        };
+        let new_loc = eat_whitespace(&input, initial_loc);
+
+        assert_eq!(new_loc.col, 3);
+        assert_eq!(new_loc.line, 1);
+        assert_eq!(new_loc.index, 7);
+    }
 
     #[test]
     fn test_location_increment() {

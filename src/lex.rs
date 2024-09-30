@@ -49,7 +49,7 @@ impl Location {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum TokenKind {
-    Indentifier,
+    Identifier,
     Syntax,
     Keyword,
     Number,
@@ -117,7 +117,7 @@ fn lex_identifier(raw: &[char], initial_loc: Location) -> Option<(Token, Locatio
             Token {
                 value: ident,
                 loc: initial_loc,
-                kind: TokenKind::Indentifier,
+                kind: TokenKind::Identifier,
             },
             next_loc,
         ))
@@ -316,7 +316,7 @@ mod tests {
             },
             Token {
                 value: String::from("x"),
-                kind: TokenKind::Indentifier,
+                kind: TokenKind::Identifier,
                 loc: Location {
                     col: 6,
                     line: 0,

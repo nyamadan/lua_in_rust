@@ -70,6 +70,24 @@ fn expect_keyword(tokens: &[Token], index: usize, value: &str) -> bool {
     t.kind == TokenKind::Keyword && t.value == value
 }
 
+fn expect_syntax(tokens: &[Token], index: usize, value: &str) -> bool {
+    if index >= tokens.len() {
+        return false;
+    }
+
+    let t = tokens[index].clone();
+    t.kind == TokenKind::Syntax && t.value == value
+}
+
+fn expect_identifier(tokens: &[Token], index: usize, value: &str) -> bool {
+    if index >= tokens.len() {
+        return false;
+    }
+
+    let t = tokens[index].clone();
+    t.kind == TokenKind::Identifier && t.value == value
+}
+
 pub fn parse(_raw: &[char], _tokens: Vec<Token>) -> Result<Ast, String> {
     unimplemented!()
 }
@@ -81,16 +99,30 @@ mod tests {
 
     #[test]
     fn test_expect_keyword() {
-        let s: Vec<_> = "if true then ".chars().collect();
+        let s: Vec<_> = "if true then end;".chars().collect();
         let tokens = lex::lex(&s).unwrap();
         assert!(expect_keyword(&tokens, 0, "if"));
-        assert!(!expect_keyword(&tokens, 1, "if"));
-        assert!(!expect_keyword(&tokens, 2, "if"));
+        assert!(expect_keyword(&tokens, 2, "then"));
+    }
+
+    #[test]
+    fn test_expect_syntax() {
+        let s: Vec<_> = "local a = 1;".chars().collect();
+        let tokens = lex::lex(&s).unwrap();
+        assert!(expect_syntax(&tokens, 2, "="));
+        assert!(expect_syntax(&tokens, 4, ";"));
+    }
+
+    #[test]
+    fn test_expect_identifier() {
+        let s: Vec<_> = "local a = 1;".chars().collect();
+        let tokens = lex::lex(&s).unwrap();
+        assert!(expect_identifier(&tokens, 1, "a"));
     }
 
     #[test]
     fn test_parse() {
-        let s: Vec<_> = "function myFunc ".chars().collect();
+        let s: Vec<_> = "function myFunc end;".chars().collect();
         let tokens = lex::lex(&s).unwrap();
 
         let result = parse(&[], tokens);

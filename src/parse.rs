@@ -1,5 +1,3 @@
-use std::intrinsics::mir::ReturnTo;
-
 use crate::lex::{Token, TokenKind};
 
 #[derive(Debug)]
@@ -81,13 +79,13 @@ fn expect_syntax(tokens: &[Token], index: usize, value: &str) -> bool {
     t.kind == TokenKind::Syntax && t.value == value
 }
 
-fn expect_identifier(tokens: &[Token], index: usize, value: &str) -> bool {
+fn expect_identifier(tokens: &[Token], index: usize) -> bool {
     if index >= tokens.len() {
         return false;
     }
 
     let t = tokens[index].clone();
-    t.kind == TokenKind::Identifier && t.value == value
+    t.kind == TokenKind::Identifier
 }
 
 fn parse_expression_statement(
@@ -197,21 +195,94 @@ fn parse_expression(raw: &[char], tokens: &[Token], index: usize) -> Option<(Exp
 
     let rtoken = tokens[next_index].clone();
     let right = match rtoken.kind {
-        TokenKind::Number => Expression::Literal(Literal::Number(rtoken))
-        TokenKind::Identifier => Expression::Literal(Literal::Identifier(rtoken))
+        TokenKind::Number => Expression::Literal(Literal::Number(rtoken)),
+        TokenKind::Identifier => Expression::Literal(Literal::Identifier(rtoken)),
         _ => {
-            println!("{}", rtoken.loc.debug(raw, "Expected valid right hand side binary operand:"));
+            println!(
+                "{}",
+                rtoken
+                    .loc
+                    .debug(raw, "Expected valid right hand side binary operand:")
+            );
             return None;
         }
     };
 
     next_index += 1;
 
-    Some((Expression::BinaryOperation(BinaryOperation {
-        left: Box::new(left),
-        right: Box::new(right),
-        operator: op,
-    }), next_index))
+    Some((
+        Expression::BinaryOperation(BinaryOperation {
+            left: Box::new(left),
+            right: Box::new(right),
+            operator: op,
+        }),
+        next_index,
+    ))
+}
+
+fn parse_function(raw: &[char], tokens: &[Token], index: usize) -> Option<(Statement, usize)> {
+    if !expect_keyword(tokens, index, "function") {
+        return None;
+    }
+
+    let mut next_index = index + 1;
+
+    if !expect_identifier(tokens, next_index) {
+        println!(
+            "{}",
+            tokens[next_index]
+                .loc
+                .debug(raw, "Expected valid identifier for function name:")
+        );
+        return None;
+    }
+
+    let name = tokens[next_index].clone();
+    next_index += 1;
+
+    let mut parameters: Vec<Token> = vec![];
+    while !expect_syntax(tokens, next_index, ")") {
+        if !parameters.is_empty() {
+            if !expect_syntax(tokens, next_index, ",") {
+                println!("{}", tokens[next_index].loc.debug(raw, "Expected comma or close parenthesis after parameter in function declaration:"));
+            }
+
+            next_index += 1;
+        }
+
+        parameters.push(tokens[next_index].clone());
+        next_index += 1; // skip past param
+    }
+
+    next_index += 1; // skip past close paren
+
+    let mut statements: Vec<Statement> = vec![];
+    while !expect_keyword(tokens, next_index, "end") {
+        let res = parse_statement(raw, tokens, next_index);
+        if let Some((stmt, next_next_index)) = res {
+            next_index = next_next_index;
+            statements.push(stmt);
+        } else {
+            println!(
+                "{}",
+                tokens[next_index]
+                    .loc
+                    .debug(raw, "Expected valid statement in function declaration:")
+            );
+            return None;
+        }
+    }
+
+    next_index += 1;
+
+    Some((
+        Statement::FunctionDeclaration(FunctionDeclaration {
+            name,
+            parameters,
+            body: statements,
+        }),
+        next_index,
+    ))
 }
 
 fn parse_statement(raw: &[char], tokens: &[Token], index: usize) -> Option<(Statement, usize)> {

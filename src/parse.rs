@@ -286,24 +286,6 @@ fn parse_function(raw: &[char], tokens: &[Token], index: usize) -> Option<(State
     ))
 }
 
-fn parse_statement(raw: &[char], tokens: &[Token], index: usize) -> Option<(Statement, usize)> {
-    let parsers = [
-        parse_if,
-        parse_expression_statement,
-        parse_return,
-        parse_local,
-    ];
-
-    for parser in parsers {
-        let res = parser(raw, tokens, index);
-        if res.is_some() {
-            return res;
-        }
-    }
-
-    None
-}
-
 fn parse_return(raw: &[char], tokens: &[Token], index: usize) -> Option<(Statement, usize)> {
     if !expect_keyword(tokens, index, "return") {
         return None;
@@ -335,6 +317,32 @@ fn parse_return(raw: &[char], tokens: &[Token], index: usize) -> Option<(Stateme
 
     next_index += 1; // Skip past semicolon
     Some((Statement::Return(Return { expression: expr }), next_index))
+}
+
+fn parse_statement(raw: &[char], tokens: &[Token], index: usize) -> Option<(Statement, usize)> {
+    let parsers = [
+        parse_if,
+        parse_expression_statement,
+        parse_return,
+        parse_local,
+    ];
+
+    for parser in parsers {
+        let res = parser(raw, tokens, index);
+        if res.is_some() {
+            return res;
+        }
+    }
+
+    None
+}
+
+fn parse_if(raw: &[char], tokens: &[Token], index: usize) -> Option<(Statement, usize)> {
+    unimplemented!()
+}
+
+fn parse_local(raw: &[char], tokens: &[Token], index: usize) -> Option<(Statement, usize)> {
+    unimplemented!()
 }
 
 pub fn parse(raw: &[char], tokens: Vec<Token>) -> Result<Ast, String> {
@@ -380,7 +388,7 @@ mod tests {
     fn test_expect_identifier() {
         let s: Vec<_> = "local a = 1;".chars().collect();
         let tokens = lex::lex(&s).unwrap();
-        assert!(expect_identifier(&tokens, 1, "a"));
+        assert!(expect_identifier(&tokens, 1));
     }
 
     #[test]

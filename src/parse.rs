@@ -245,6 +245,7 @@ fn parse_function(raw: &[char], tokens: &[Token], index: usize) -> Option<(State
         if !parameters.is_empty() {
             if !expect_syntax(tokens, next_index, ",") {
                 println!("{}", tokens[next_index].loc.debug(raw, "Expected comma or close parenthesis after parameter in function declaration:"));
+                return None;
             }
 
             next_index += 1;
@@ -301,6 +302,39 @@ fn parse_statement(raw: &[char], tokens: &[Token], index: usize) -> Option<(Stat
     }
 
     None
+}
+
+fn parse_return(raw: &[char], tokens: &[Token], index: usize) -> Option<(Statement, usize)> {
+    if !expect_keyword(tokens, index, "return") {
+        return None;
+    }
+
+    let mut next_index = index + 1;
+    let res = parse_expression(raw, tokens, next_index);
+    if res.is_none() {
+        println!(
+            "{}",
+            tokens[next_index]
+                .loc
+                .debug(raw, "Expected valid expression in return statement:")
+        );
+        return None;
+    }
+
+    let (expr, next_next_index) = res.unwrap();
+    next_index = next_next_index;
+    if !expect_syntax(tokens, next_index, ";") {
+        println!(
+            "{}",
+            tokens[next_index]
+                .loc
+                .debug(raw, "Expected semicolon in return statement:")
+        );
+        return None;
+    }
+
+    next_index += 1; // Skip past semicolon
+    Some((Statement::Return(Return { expression: expr }), next_index))
 }
 
 pub fn parse(raw: &[char], tokens: Vec<Token>) -> Result<Ast, String> {

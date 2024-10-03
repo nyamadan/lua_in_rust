@@ -337,11 +337,74 @@ fn parse_statement(raw: &[char], tokens: &[Token], index: usize) -> Option<(Stat
     None
 }
 
-fn parse_if(raw: &[char], tokens: &[Token], index: usize) -> Option<(Statement, usize)> {
-    unimplemented!()
+fn parse_local(raw: &[char], tokens: &[Token], index: usize) -> Option<(Statement, usize)> {
+    if !expect_keyword(tokens, index, "local") {
+        return None;
+    }
+
+    let mut next_index = index + 1; // skip past local
+
+    if !expect_identifier(tokens, next_index) {
+        println!(
+            "{}",
+            tokens[next_index]
+                .loc
+                .debug(raw, "Expected valid identifier or local name")
+        );
+        return None;
+    }
+
+    let name = tokens[next_index].clone();
+    next_index += 1; // skip past name
+
+    if !expect_syntax(tokens, next_index, "=") {
+        println!(
+            "{}",
+            tokens[next_index]
+                .loc
+                .debug(raw, "Expected = syntax after local name:")
+        );
+        return None;
+    }
+
+    next_index += 1; // skip past =
+
+    let res = parse_expression(raw, tokens, next_index);
+    if res.is_none() {
+        println!(
+            "{}",
+            tokens[next_index]
+                .loc
+                .debug(raw, "Expected valid expression in local declaration:")
+        );
+        return None;
+    }
+
+    let (expr, next_next_index) = res.unwrap();
+    next_index = next_next_index;
+
+    if !expect_syntax(tokens, next_index, ";") {
+        println!(
+            "{}",
+            tokens[next_index]
+                .loc
+                .debug(raw, "Expected semicolon in return statement:")
+        );
+        return None;
+    }
+
+    next_index += 1; // skip past semicolon
+
+    Some((
+        Statement::Local(Local {
+            name,
+            expression: expr,
+        }),
+        next_index,
+    ))
 }
 
-fn parse_local(raw: &[char], tokens: &[Token], index: usize) -> Option<(Statement, usize)> {
+fn parse_if(raw: &[char], tokens: &[Token], index: usize) -> Option<(Statement, usize)> {
     unimplemented!()
 }
 

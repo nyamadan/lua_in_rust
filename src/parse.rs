@@ -405,7 +405,58 @@ fn parse_local(raw: &[char], tokens: &[Token], index: usize) -> Option<(Statemen
 }
 
 fn parse_if(raw: &[char], tokens: &[Token], index: usize) -> Option<(Statement, usize)> {
-    unimplemented!()
+    if !expect_keyword(tokens, index, "if") {
+        return None;
+    }
+
+    let mut next_index = index + 1;
+    let res = parse_expression(raw, tokens, next_index);
+    if res.is_none() {
+        println!(
+            "{}",
+            tokens[next_index]
+                .loc
+                .debug(raw, "Expected valid expression for if test:")
+        );
+        return None;
+    }
+
+    let (test, next_next_index) = res.unwrap();
+    next_index = next_next_index;
+
+    if !expect_keyword(tokens, next_index, "then") {
+        return None;
+    }
+
+    next_index += 1; //Skip past then
+
+    let mut statements: Vec<Statement> = vec![];
+
+    while !expect_keyword(tokens, next_index, "end") {
+        let res = parse_statement(raw, tokens, next_index);
+        if let Some((stmt, next_next_index)) = res {
+            next_index = next_next_index;
+            statements.push(stmt);
+        } else {
+            println!(
+                "{}",
+                tokens[next_index]
+                    .loc
+                    .debug(raw, "Expected valid statement in if body:")
+            );
+            return None;
+        }
+    }
+
+    next_index += 1;
+
+    Some((
+        Statement::If(If {
+            test,
+            body: statements,
+        }),
+        next_index,
+    ))
 }
 
 pub fn parse(raw: &[char], tokens: Vec<Token>) -> Result<Ast, String> {

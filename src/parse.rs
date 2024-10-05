@@ -98,7 +98,7 @@ fn parse_expression_statement(
 
     let (expr, next_next_index) = res;
     next_index = next_next_index;
-    if !expect_syntax(tokens, index, ":") {
+    if !expect_syntax(tokens, next_index, ";") {
         println!(
             "{}",
             tokens[next_index]
@@ -135,7 +135,7 @@ fn parse_expression(raw: &[char], tokens: &[Token], index: usize) -> Option<(Exp
         let mut arguments: Vec<Expression> = vec![];
 
         while !expect_syntax(tokens, next_index, ")") {
-            if arguments.is_empty() {
+            if !arguments.is_empty() { // ???
                 if !expect_syntax(tokens, next_index, ",") {
                     println!(
                         "{}",
@@ -226,7 +226,6 @@ fn parse_function(raw: &[char], tokens: &[Token], index: usize) -> Option<(State
     }
 
     let mut next_index = index + 1;
-
     if !expect_identifier(tokens, next_index) {
         println!(
             "{}",
@@ -238,8 +237,19 @@ fn parse_function(raw: &[char], tokens: &[Token], index: usize) -> Option<(State
     }
 
     let name = tokens[next_index].clone();
-    next_index += 1;
 
+    next_index += 1;
+    if !expect_syntax(tokens, next_index, "(") {
+        println!(
+            "{}",
+            tokens[next_index]
+                .loc
+                .debug(raw, "Expected open paranthesis in function declaration:")
+        );
+        return None;
+    }
+
+    next_index += 1; // skip past open paran
     let mut parameters: Vec<Token> = vec![];
     while !expect_syntax(tokens, next_index, ")") {
         if !parameters.is_empty() {
@@ -324,6 +334,7 @@ fn parse_statement(raw: &[char], tokens: &[Token], index: usize) -> Option<(Stat
         parse_if,
         parse_expression_statement,
         parse_return,
+        parse_function,
         parse_local,
     ];
 
@@ -507,10 +518,23 @@ mod tests {
 
     #[test]
     fn test_parse() {
-        let s: Vec<_> = "function myFunc end;".chars().collect();
-        let tokens = lex::lex(&s).unwrap();
+        let raw: Vec<_> = "function fib(n)
+   if n < 2 then
+      return n;
+   end
 
-        let result = parse(&[], tokens);
+   local n1 = fib(n-1);
+   local n2 = fib(n-2);
+   return n1 + n2;
+end
+
+print(fib(30));
+"
+            .chars()
+            .collect();
+        let tokens = lex::lex(&raw).unwrap();
+
+        let result = parse(&raw, tokens);
         assert!(result.is_ok());
     }
 }

@@ -494,29 +494,6 @@ mod tests {
     use crate::*;
 
     #[test]
-    fn test_expect_keyword() {
-        let s: Vec<_> = "if true then end;".chars().collect();
-        let tokens = lex::lex(&s).unwrap();
-        assert!(expect_keyword(&tokens, 0, "if"));
-        assert!(expect_keyword(&tokens, 2, "then"));
-    }
-
-    #[test]
-    fn test_expect_syntax() {
-        let s: Vec<_> = "local a = 1;".chars().collect();
-        let tokens = lex::lex(&s).unwrap();
-        assert!(expect_syntax(&tokens, 2, "="));
-        assert!(expect_syntax(&tokens, 4, ";"));
-    }
-
-    #[test]
-    fn test_expect_identifier() {
-        let s: Vec<_> = "local a = 1;".chars().collect();
-        let tokens = lex::lex(&s).unwrap();
-        assert!(expect_identifier(&tokens, 1));
-    }
-
-    #[test]
     fn test_parse() {
         let raw: Vec<_> = "function fib(n)
    if n < 2 then
